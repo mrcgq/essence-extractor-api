@@ -1,0 +1,14 @@
+{
+  "name": "essence-extractor-api",
+  "version": "2.0.0",
+  "description": "高保真文档提炼器 · API版 · 支持 Google/Anthropic/OpenAI",
+  "type": "module",
+  "scripts": {
+    "dev":  "npx serve . -p 5173 --no-clipboard",
+    "cli":  "node cli.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {}
+}

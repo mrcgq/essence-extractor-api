@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>高保真文档提炼器 · API版</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+     background:#0a0f1e;color:#e2e8f0;min-height:100vh;padding:20px}
+.wrap{max-width:860px;margin:0 auto}
+
+h1{text-align:center;font-size:1.75rem;padding:24px 0 8px;
+   background:linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6);
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{text-align:center;color:#64748b;font-size:.84rem;margin-bottom:6px}
+.sub2{text-align:center;color:#475569;font-size:.75rem;margin-bottom:26px}
+
+.badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:24px}
+.badge{background:#1e293b;border:1px solid #334155;border-radius:99px;
+       padding:3px 12px;font-size:.72rem;color:#94a3b8}
+.badge.hot{border-color:#7c3aed;color:#c4b5fd;background:#1e1b4b}
+
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;
+      padding:18px;margin-bottom:14px}
+.card-title{font-size:.82rem;color:#94a3b8;margin-bottom:12px;
+            display:flex;align-items:center;gap:6px}
+
+/* 表单控件 */
+.field{margin-bottom:10px}
+.field label{display:block;font-size:.77rem;color:#64748b;margin-bottom:5px}
+.field input,.field select{width:100%;background:#0f172a;border:1px solid #334155;
+  border-radius:8px;padding:9px 12px;color:#e2e8f0;font-size:.87rem}
+.field input:focus,.field select:focus{outline:none;border-color:#6366f1}
+.field select option{background:#1e293b}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* API Key 行 */
+.api-row{display:flex;gap:8px}
+.api-row input{flex:1}
+
+.btn-sm{border:none;border-radius:7px;padding:8px 14px;cursor:pointer;
+        font-size:.82rem;font-weight:500;white-space:nowrap;transition:opacity .15s}
+.btn-sm:hover{opacity:.85}
+.btn-save{background:#1d4ed8;color:#fff}
+.btn-test{background:#065f46;color:#6ee7b7}
+
+.status{font-size:.73rem;margin-top:5px;color:#475569}
+.status.ok{color:#34d399}
+.status.err{color:#f87171}
+.status.testing{color:#fbbf24}
+
+/* 上传区 */
+.dropzone{border:2px dashed #334155;border-radius:12px;padding:40px 20px;
+          text-align:center;cursor:pointer;transition:all .2s;
+          background:#1e293b;margin-bottom:13px}
+.dropzone:hover,.dropzone.over{border-color:#6366f1;background:#1e1b4b}
+.dz-icon{font-size:2.8rem;margin-bottom:10px}
+.dz-text{color:#94a3b8;font-size:.86rem;line-height:1.8}
+
+.file-bar{background:#1e293b;border:1px solid #334155;border-radius:8px;
+          padding:10px 14px;display:none;align-items:center;
+          gap:12px;margin-bottom:13px}
+.file-bar.show{display:flex}
+.file-bar-icon{font-size:1.4rem}
+.file-bar-name{font-weight:600;font-size:.9rem}
+.file-bar-size{color:#64748b;font-size:.76rem}
+
+/* 主按钮 */
+.btn-main{width:100%;padding:14px;
+          background:linear-gradient(135deg,#4f46e5,#7c3aed);
+          color:#fff;font-size:1rem;font-weight:600;
+          border:none;border-radius:10px;cursor:pointer;
+          margin-bottom:14px;transition:opacity .15s;
+          box-shadow:0 4px 15px rgba(99,102,241,.3)}
+.btn-main:hover:not(:disabled){opacity:.9}
+.btn-main:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+
+/* 进度 */
+.prog-box{background:#1e293b;border:1px solid #334155;border-radius:10px;
+          padding:14px;margin-bottom:13px;display:none}
+.prog-box.show{display:block}
+.prog-msg{font-size:.82rem;color:#94a3b8;margin-bottom:9px}
+.prog-bg{background:#0f172a;border-radius:99px;height:8px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#6366f1,#a855f7);
+           border-radius:99px;transition:width .4s ease;width:0%}
+
+/* 结果 */
+.result-box{display:none}
+.result-box.show{display:block}
+.result-head{display:flex;justify-content:space-between;
+             align-items:center;margin-bottom:11px}
+.result-title{font-weight:600;font-size:.93rem;color:#e2e8f0}
+.export-row{display:flex;gap:8px}
+.btn-exp{border:none;border-radius:8px;padding:8px 16px;
+         cursor:pointer;font-size:.82rem;font-weight:500;transition:opacity .15s}
+.btn-exp:hover{opacity:.82}
+.btn-txt{background:#064e3b;color:#6ee7b7}
+.btn-doc{background:#1e1b4b;color:#a5b4fc}
+
+.result-text{background:#0f172a;border:1px solid #1e293b;border-radius:10px;
+             padding:18px;font-family:'Courier New',monospace;
+             font-size:.76rem;line-height:1.8;white-space:pre-wrap;
+             word-break:break-word;max-height:600px;overflow-y:auto;
+             color:#94a3b8}
+
+/* 错误框 */
+.err-box{background:#450a0a;border:1px solid #991b1b;border-radius:8px;
+         padding:13px 15px;color:#fca5a5;font-size:.83rem;
+         margin-bottom:13px;display:none;white-space:pre-line;line-height:1.6}
+.err-box.show{display:block}
+
+.tip{color:#374151;font-size:.72rem;margin-top:8px;line-height:1.6}
+.tip a{color:#6366f1;text-decoration:none}
+.tip a:hover{text-decoration:underline}
+
+.provider-tag{display:inline-block;padding:1px 8px;border-radius:99px;
+              font-size:.68rem;margin-left:6px;vertical-align:middle}
+.tag-google{background:#1a3a5c;color:#60a5fa}
+.tag-anthropic{background:#2d1b4e;color:#c4b5fd}
+.tag-openai{background:#064e3b;color:#6ee7b7}
+
+/* 模型选择器 */
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:8px}
+.model-card{border:1px solid #334155;border-radius:8px;padding:10px 12px;
+            cursor:pointer;transition:all .15s;background:#0f172a}
+.model-card:hover{border-color:#6366f1}
+.model-card.selected{border-color:#6366f1;background:#1e1b4b}
+.model-card input{display:none}
+.model-name{font-size:.83rem;font-weight:600;color:#e2e8f0}
+.model-desc{font-size:.7rem;color:#64748b;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>🔬 高保真文档提炼器</h1>
+<p class="sub">双程高保真提取 · 五要素边界锚定 · 禁止项强制保留</p>
+<p class="sub2">支持 Google Gemini · Anthropic Claude · OpenAI GPT</p>
+
+<div class="badges">
+  <span class="badge hot">🤖 AI驱动</span>
+  <span class="badge hot">🎯 五要素锚定</span>
+  <span class="badge hot">🛡️ 反幻觉指令</span>
+  <span class="badge">📄 TXT</span>
+  <span class="badge">📝 Markdown</span>
+  <span class="badge">🌐 HTML</span>
+  <span class="badge">📊 CSV</span>
+</div>
+
+<!-- Step 1: API 配置 -->
+<div class="card">
+  <div class="card-title">⚙️ Step 1：API 配置</div>
+
+  <div class="field">
+    <label>AI 提供商</label>
+    <select id="providerSelect">
+      <option value="google">Google AI Studio（推荐，免费额度充足）</option>
+      <option value="anthropic">Anthropic Claude</option>
+      <option value="openai">OpenAI GPT</option>
+    </select>
+  </div>
+
+  <div class="field" id="apiKeyField">
+    <label id="apiKeyLabel">API Key</label>
+    <div class="api-row">
+      <input type="password" id="apiKeyInput" placeholder="粘贴你的 API Key"/>
+      <button class="btn-sm btn-save" id="saveKeyBtn">保存</button>
+      <button class="btn-sm btn-test" id="testKeyBtn">测试</button>
+    </div>
+    <div class="status" id="keyStatus">未设置</div>
+  </div>
+
+  <div class="tip" id="apiTip">
+    Google AI Studio：免费获取 → <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>
+    API Key 仅存储在本地浏览器，不经过任何服务器
+  </div>
+</div>
+
+<!-- Step 2: 模型选择 -->
+<div class="card">
+  <div class="card-title">🤖 Step 2：选择模型</div>
+  <div class="model-grid" id="modelGrid">
+    <!-- 由JS动态生成 -->
+  </div>
+  <div class="tip" style="margin-top:10px">
+    推荐：gemini-2.0-flash（速度快，免费，支持100万token上下文）
+  </div>
+</div>
+
+<!-- Step 3: 可选代理 -->
+<div class="card">
+  <div class="card-title">🌐 Step 3：代理设置（可选）</div>
+  <div class="field">
+    <label>Cloudflare Worker 代理地址（留空则直连）</label>
+    <div class="api-row">
+      <input type="url" id="proxyInput" placeholder="https://your-worker.workers.dev"/>
+      <button class="btn-sm btn-save" id="saveProxyBtn">保存</button>
+    </div>
+    <div class="status" id="proxyStatus">未设置（直连模式）</div>
+  </div>
+  <div class="tip">
+    ⚠️ 浏览器直连 Google/Anthropic/OpenAI API 可能遇到 CORS 问题<br>
+    · 本地开发：使用 <code>node cli.js</code> 无此问题<br>
+    · GitHub Pages 部署：需要配置 Cloudflare Worker 代理
+  </div>
+</div>
+
+<!-- Step 4: 上传文件 -->
+<div class="card">
+  <div class="card-title">📂 Step 4：上传文件</div>
+  <div class="dropzone" id="dropzone">
+    <div class="dz-icon">📄</div>
+    <div class="dz-text">
+      <strong>拖拽文件到此处</strong>，或点击选择文件<br>
+      支持 TXT / Markdown / HTML / CSV<br>
+      <small style="color:#475569">PDF/Word 请先导出为 TXT 格式</small>
+    </div>
+    <input type="file" id="fileInput"
+           accept=".txt,.md,.markdown,.html,.htm,.csv"
+           style="display:none"/>
+  </div>
+
+  <div class="file-bar" id="fileBar">
+    <div class="file-bar-icon" id="fileBarIcon">📄</div>
+    <div>
+      <div class="file-bar-name" id="fileBarName"></div>
+      <div class="file-bar-size" id="fileBarSize"></div>
+    </div>
+  </div>
+</div>
+
+<div class="err-box" id="errBox"></div>
+
+<button class="btn-main" id="extractBtn" disabled>
+  🚀 开始高保真提炼
+</button>
+
+<!-- 进度 -->
+<div class="prog-box" id="progBox">
+  <div class="prog-msg" id="progMsg">准备中...</div>
+  <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+</div>
+
+<!-- 结果 -->
+<div class="result-box" id="resultBox">
+  <div class="result-head">
+    <div class="result-title">✅ 高保真提炼完成</div>
+    <div class="export-row">
+      <button class="btn-exp btn-txt" id="dlTxt">⬇ TXT</button>
+      <button class="btn-exp btn-doc" id="dlDoc">⬇ Word</button>
+    </div>
+  </div>
+  <div class="result-text" id="resultText"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<script type="module">
+import { Extractor }        from './core/extractor.js'
+import { parseFileBrowser } from './core/parser.js'
+import { MODEL_CONFIGS }    from './core/prompts.js'
+
+// ── 工具 ──────────────────────────────
+const $   = id => document.getElementById(id)
+const fmt = b => b < 1024 ? `${b}B`
+              : b < 1048576 ? `${(b/1024).toFixed(1)}KB`
+              : `${(b/1048576).toFixed(2)}MB`
+
+const ICON_MAP = {
+  pdf:'📕', docx:'📘', doc:'📘', md:'📝',
+  markdown:'📝', html:'🌐', htm:'🌐', csv:'📊', txt:'📄'
+}
+
+// 各提供商模型列表
+const PROVIDER_MODELS = {
+  google: [
+    { id: 'gemini-2.0-flash',      name: 'Gemini 2.0 Flash',      desc: '推荐 · 免费 · 速度最快' },
+    { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', desc: '极速 · 免费 · 轻量场景' },
+    { id: 'gemini-1.5-pro',        name: 'Gemini 1.5 Pro',        desc: '200万Token · 超长文档' },
+    { id: 'gemini-1.5-flash',      name: 'Gemini 1.5 Flash',      desc: '快速 · 免费额度高' }
+  ],
+  anthropic: [
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', desc: '高质量 · 旗舰模型' },
+    { id: 'claude-3-5-haiku-20241022',  name: 'Claude 3.5 Haiku',  desc: '高速 · 经济实惠' }
+  ],
+  openai: [
+    { id: 'gpt-4o',      name: 'GPT-4o',      desc: '旗舰模型 · 高质量' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o mini', desc: '经济实惠 · 速度快' }
+  ]
+}
+
+const API_TIPS = {
+  google:    'Google AI Studio：免费获取 → <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a><br>API Key 仅存储在本地浏览器，不经过任何服务器',
+  anthropic: 'Anthropic Console：获取 → <a href="https://console.anthropic.com/keys" target="_blank">console.anthropic.com/keys</a><br>API Key 仅存储在本地浏览器',
+  openai:    'OpenAI Platform：获取 → <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a><br>API Key 仅存储在本地浏览器'
+}
+
+// ── 状态 ──────────────────────────────
+let currentProvider = 'google'
+let currentModel    = 'gemini-2.0-flash'
+let selectedFile    = null
+let resultTxt       = ''
+let resultDocx      = null
+
+// ── 初始化 ────────────────────────────
+function init() {
+  loadSettings()
+  renderModelGrid('google')
+  updateApiTip('google')
+}
+
+function loadSettings() {
+  const provider = localStorage.getItem('ee_provider') || 'google'
+  const key      = localStorage.getItem(`ee_key_${provider}`) || ''
+  const proxy    = localStorage.getItem('ee_proxy') || ''
+  const model    = localStorage.getItem(`ee_model_${provider}`) || PROVIDER_MODELS[provider][0].id
+
+  $('providerSelect').value = provider
+  currentProvider = provider
+  currentModel    = model
+
+  if (key) {
+    $('apiKeyInput').value = key
+    $('keyStatus').textContent = '✓ 已加载'
+    $('keyStatus').className   = 'status ok'
+  }
+
+  if (proxy) {
+    $('proxyInput').value = proxy
+    $('proxyStatus').textContent = `✓ ${proxy}`
+    $('proxyStatus').className   = 'status ok'
+  }
+}
+
+// ── 提供商切换 ────────────────────────
+$('providerSelect').addEventListener('change', e => {
+  const provider  = e.target.value
+  currentProvider = provider
+
+  const savedKey = localStorage.getItem(`ee_key_${provider}`) || ''
+  $('apiKeyInput').value = savedKey
+  $('keyStatus').textContent = savedKey ? '✓ 已加载' : '未设置'
+  $('keyStatus').className   = savedKey ? 'status ok' : 'status'
+
+  renderModelGrid(provider)
+  updateApiTip(provider)
+})
+
+function renderModelGrid(provider) {
+  const models = PROVIDER_MODELS[provider] || []
+  const grid   = $('modelGrid')
+  const saved  = localStorage.getItem(`ee_model_${provider}`) || models[0]?.id
+
+  grid.innerHTML = models.map(m => `
+    <label class="model-card ${m.id === saved ? 'selected' : ''}" data-id="${m.id}">
+      <input type="radio" name="model" value="${m.id}" ${m.id === saved ? 'checked' : ''}/>
+      <div class="model-name">${m.name}</div>
+      <div class="model-desc">${m.desc}</div>
+    </label>
+  `).join('')
+
+  currentModel = saved || models[0]?.id
+
+  grid.querySelectorAll('.model-card').forEach(card => {
+    card.addEventListener('click', () => {
+      grid.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'))
+      card.classList.add('selected')
+      currentModel = card.dataset.id
+      localStorage.setItem(`ee_model_${currentProvider}`, currentModel)
+    })
+  })
+}
+
+function updateApiTip(provider) {
+  $('apiTip').innerHTML = API_TIPS[provider] || ''
+  const placeholders = {
+    google:    'AIza...',
+    anthropic: 'sk-ant-...',
+    openai:    'sk-...'
+  }
+  $('apiKeyInput').placeholder = placeholders[provider] || 'API Key'
+}
+
+// ── API Key 保存 ──────────────────────
+$('saveKeyBtn').addEventListener('click', () => {
+  const key = $('apiKeyInput').value.trim()
+  if (!key) { alert('请先输入 API Key'); return }
+  localStorage.setItem('ee_provider',         currentProvider)
+  localStorage.setItem(`ee_key_${currentProvider}`, key)
+  $('keyStatus').textContent = '✓ 已保存到本地'
+  $('keyStatus').className   = 'status ok'
+})
+
+// ── API Key 测试 ──────────────────────
+$('testKeyBtn').addEventListener('click', async () => {
+  const key = $('apiKeyInput').value.trim()
+  if (!key) { alert('请先输入 API Key'); return }
+
+  $('keyStatus').textContent = '⏳ 测试中...'
+  $('keyStatus').className   = 'status testing'
+
+  try {
+    const extractor = new Extractor({
+      apiKey:    key,
+      model:     currentModel,
+      provider:  currentProvider,
+      proxyUrl:  localStorage.getItem('ee_proxy') || null
+    })
+
+    await extractor.callAPI('你是助手。', '请回复："测试成功"（只输出这四个字）')
+    $('keyStatus').textContent = '✅ 测试成功，API Key 有效'
+    $('keyStatus').className   = 'status ok'
+  } catch (e) {
+    $('keyStatus').textContent = `❌ 测试失败：${e.message}`
+    $('keyStatus').className   = 'status err'
+  }
+})
+
+// ── 代理保存 ──────────────────────────
+$('saveProxyBtn').addEventListener('click', () => {
+  const v = $('proxyInput').value.trim()
+  localStorage.setItem('ee_proxy', v)
+  $('proxyStatus').textContent = v ? `✓ ${v}` : '已清除（直连模式）'
+  $('proxyStatus').className   = 'status ok'
+})
+
+// ── 文件选择 ──────────────────────────
+function onFile(file) {
+  if (!file) return
+  selectedFile = file
+  const ext = file.name.split('.').pop().toLowerCase()
+  $('fileBarIcon').textContent = ICON_MAP[ext] || '📄'
+  $('fileBarName').textContent = file.name
+  $('fileBarSize').textContent = fmt(file.size)
+  $('fileBar').className       = 'file-bar show'
+  $('extractBtn').disabled     = false
+  hideErr()
+}
+
+$('dropzone').addEventListener('click', () => $('fileInput').click())
+$('fileInput').addEventListener('change', e => onFile(e.target.files[0]))
+$('dropzone').addEventListener('dragover', e => {
+  e.preventDefault(); $('dropzone').classList.add('over')
+})
+$('dropzone').addEventListener('dragleave', () =>
+  $('dropzone').classList.remove('over')
+)
+$('dropzone').addEventListener('drop', e => {
+  e.preventDefault()
+  $('dropzone').classList.remove('over')
+  onFile(e.dataTransfer.files[0])
+})
+
+// ── 错误提示 ──────────────────────────
+function showErr(msg) {
+  $('errBox').textContent = msg
+  $('errBox').className   = 'err-box show'
+}
+function hideErr() { $('errBox').className = 'err-box' }
+
+// ── 进度 ──────────────────────────────
+function setProgress({ progress, message }) {
+  $('progMsg').textContent    = message
+  $('progFill').style.width   = `${progress}%`
+}
+
+// ── 主提取流程 ────────────────────────
+$('extractBtn').addEventListener('click', async () => {
+  const apiKey = $('apiKeyInput').value.trim()
+               || localStorage.getItem(`ee_key_${currentProvider}`)
+               || ''
+  const proxy  = $('proxyInput').value.trim()
+               || localStorage.getItem('ee_proxy')
+               || ''
+
+  if (!apiKey) { showErr('请先设置并保存 API Key'); return }
+  if (!selectedFile) { showErr('请先选择文件'); return }
+
+  hideErr()
+  $('extractBtn').disabled    = true
+  $('extractBtn').textContent = '⏳ 提炼中...'
+  $('progBox').className      = 'prog-box show'
+  $('resultBox').className    = 'result-box'
+
+  try {
+    setProgress({ progress: 3, message: '正在读取文件...' })
+    const text = await parseFileBrowser(selectedFile)
+
+    if (text.replace(/\s/g, '').length < 50) {
+      throw new Error('文件内容过少（不足50字），请确认文件包含实际文字内容')
+    }
+
+    const extractor = new Extractor({
+      apiKey,
+      model:    currentModel,
+      provider: currentProvider,
+      proxyUrl: proxy || null
+    })
+
+    const result = await extractor.extract(
+      text,
+      selectedFile.name,
+      setProgress
+    )
+
+    resultTxt  = result.txt
+    resultDocx = result.docx
+
+    $('resultText').textContent = resultTxt
+    $('resultBox').className    = 'result-box show'
+    setProgress({ progress: 100, message: '✅ 高保真提炼完成！' })
+
+  } catch (e) {
+    showErr(
+      `提取失败：${e.message}\n\n` +
+      `常见原因：\n` +
+      `· API Key 无效或额度不足\n` +
+      `· 网络连接问题（尝试配置代理）\n` +
+      `· 文件内容过长（尝试先拆分文件）`
+    )
+    $('progBox').className = 'prog-box'
+  } finally {
+    $('extractBtn').disabled    = false
+    $('extractBtn').textContent = '🚀 开始高保真提炼'
+  }
+})
+
+// ── 下载 ──────────────────────────────
+$('dlTxt').addEventListener('click', () => {
+  if (!resultTxt) return
+  const base = selectedFile.name.replace(/\.[^/.]+$/, '')
+  dl(new Blob([resultTxt], { type: 'text/plain;charset=utf-8' }),
+     `${base}_高保真提炼.txt`)
+})
+
+$('dlDoc').addEventListener('click', () => {
+  if (!resultDocx) return
+  const base = selectedFile.name.replace(/\.[^/.]+$/, '')
+  dl(new Blob([resultDocx], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  }), `${base}_高保真提炼.docx`)
+})
+
+function dl(blob, name) {
+  const url = URL.createObjectURL(blob)
+  const a   = Object.assign(document.createElement('a'), { href: url, download: name })
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// 启动
+init()
+</script>
+</body>
+</html>
